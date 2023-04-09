@@ -19,7 +19,7 @@ class HH(APIKey):
         :return: json файл
         """
         params = {
-            "text": "Python-разработчик",
+            "text": "Python",
             "per_page": 10,
             "area": 113
         }
@@ -29,6 +29,22 @@ class HH(APIKey):
                 json.dump(response.json(), f)
         else:
             return f'Error: {response.status_code}'
+
+
+class Vacancy:
+    def __init__(self):
+        with open('vacancies.json', 'r', encoding='utf-8') as f:
+            json_data = json.load(f)['items']
+
+        self.title = json_data[0]['name']
+        self.url = json_data[0]['url']
+        self.payment = json_data[0]['salary']['from']
+        self.requirement = json_data[0]['snippet']['requirement']
+        self.responsibility = json_data[0]['snippet']['responsibility']
+
+    def __le__(self, other):
+        pass
+
 
 
 
