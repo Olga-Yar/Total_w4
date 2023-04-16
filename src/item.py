@@ -15,7 +15,7 @@ class APIKey(ABC):
 
 class VacancyData(ABC):
     @abstractmethod
-    def add_vacancy(self):
+    def dump_j(self, params, url_api):
         '''
         Добавление вакансий в файл
         '''
@@ -41,8 +41,8 @@ class HH(APIKey):
 
     def api(self):
         """
-        Получение данных по ссылке, формат json
-        :return: json файл
+        Подключение по API
+        :return: response
         """
         url_api = 'https://api.hh.ru/vacancies'
         params = {
@@ -50,11 +50,29 @@ class HH(APIKey):
             "per_page": 10,
             "area": 113
         }
-        return params, url_api
+        response = requests.get(url_api, params=params)
+        return response
 
 
 class SJ(APIKey):
-    pass
+    def api(self):
+        """
+        Подключение по API
+        :return: response
+        """
+        url_api = 'https://api.superjob.ru/2.0/vacancies/'
+        params = {
+            'keyword': 'Python',
+            'town': 'Москва',
+            'count': 100,
+            'period': 0
+        }
+        headers = {
+            'X-Api-App-Id': 'v3.r.137494111.a6b43592ad3010404a6417932bb1b169d0bff73d.8da83ac6ac2fd9187fe1b5b8a7ecd1cc096ff71c',
+            'Content-Type': 'application/json'
+        }
+        response = requests.get(url_api, params=params, headers=headers)
+        return response
 
 
 class Vacancy:
@@ -80,17 +98,43 @@ class Vacancy:
         return self.payment <= other.payment
 
 
-class JSONDump(HH):
+class JSONDump():
     '''
     Класс для сохранения информации о вакансиях в json файл
     '''
-    def dump_j(self, params, url_api):
-        response = requests.get(url_api, params=params)
-        if response.status_code == 200:
+    def __init__(self, response: requests):
+        self.response = response
+
+    def dump_js(self):
+        if self.response.status_code == 200:
             with open('vacancies.json', 'w') as f:
-                json.dump(response.json(), f, indent=2, ensure_ascii=False)
+                json.dump(self.response.json(), f, indent=2, ensure_ascii=False)
         else:
-            return f'Error: {response.status_code}'
+            return f'Error: {self.response.status_code}'
+
+
+    # def get_vacancy(self, user_titlfe):
+    #     '''
+    #     Получение данных из файла по указанным критериям
+    #     :return: данные по критериям
+    #     '''
+    #     with open('../vacancies.json', 'r', encoding='utf-8') as f:
+    #         json_data = json.load(f)['items']
+    #
+    #     user_data = []
+    #     for name in json_data[0]['name']:
+    #         if user_title == name:
+    #             user_data.append(json_data[0]['name'])
+    #             user_data.append(json_data[0]['url'])
+    #             user_data.append(json_data[0]['salary']['from'])
+    #             user_data.append(json_data[0]['snippet']['requirement'])
+    #             user_data.append(json_data[0]['snippet']['responsibility'])
+    #     return user_data
+
+#
+# vac = JSONDump()
+# vac1 = JSONDump.get_vacancy(vac, 'Python')
+# print(vac1)
 
 
 

@@ -1,11 +1,13 @@
-from src.item import HH, Vacancy
+from src.item import HH, Vacancy, SJ, JSONDump
+
+vac = SJ()
+js = JSONDump(response=vac.api())
+js.dump_js()
+# vac1 = JSONDumpHH(SJ.api())
 
 
-vac = HH()
-vac.api()
-
-py = Vacancy()
-print(py.title)
-print(py.payment)
-print(py.requirement)
-print(py.responsibility)
+# py = Vacancy()
+# print(py.title)
+# print(py.payment)
+# print(py.requirement)
+# print(py.responsibility)
