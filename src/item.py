@@ -4,6 +4,17 @@ import json
 import os
 
 
+class USER:
+
+    def __init__(self, *args):
+        self.platform: str = input('Введите с какой платформы показать вакансии (HH / SJ): ')
+        self.keyword: str = input('По какому ключевому слову искать вакансии (в названии вакансии или описании): ')
+        self.top: str = input('Вывести ТОП (да / нет): ')
+        self.sort_vac: str = input('Отсортировать вакансии по уровню зп (да / нет): ')
+        if self.top == 'да':
+            self.num: int = int(input('Введите какой количество вакансий вывести в ТОП: '))
+
+
 class APIKey(ABC):
     @abstractmethod
     def api(self):
