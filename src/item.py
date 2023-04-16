@@ -7,6 +7,9 @@ import os
 class APIKey(ABC):
     @abstractmethod
     def api(self):
+        '''
+        Абстрактный класс для работы с API
+        '''
         pass
 
 
@@ -25,8 +28,8 @@ class HH(APIKey):
         }
         response = requests.get(self.url_api, params=params)
         if response.status_code == 200:
-            with open('vacancies.json', 'w', encoding='UTF-8') as f:
-                json.dump(response.json(), f)
+            with open('vacancies.json', 'w') as f:
+                json.dump(response.json(), f, indent=2, ensure_ascii=False)
         else:
             return f'Error: {response.status_code}'
 
@@ -43,7 +46,12 @@ class Vacancy:
         self.responsibility = json_data[0]['snippet']['responsibility']
 
     def __le__(self, other):
-        pass
+        '''
+        Сравнение вакансий по уровню зарплаты
+        :param other: вакансия2
+        :return: True - зп вакансии 1 меньше зп вакансии 2, в противном случае False
+        '''
+        return self.payment <= other.payment
 
 
 
