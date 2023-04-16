@@ -13,28 +13,54 @@ class APIKey(ABC):
         pass
 
 
+class VacancyData(ABC):
+    @abstractmethod
+    def add_vacancy(self):
+        '''
+        Добавление вакансий в файл
+        '''
+        pass
+
+    @abstractmethod
+    def get_vacancy(self):
+        '''
+        Получение данных из файла по указанным критериям
+        :return: data
+        '''
+        pass
+
+    @abstractmethod
+    def del_vacancy(self):
+        '''
+        Удаление информации о вакансиях
+        '''
+        pass
+
+
 class HH(APIKey):
-    url_api = 'https://api.hh.ru/vacancies'
 
     def api(self):
         """
         Получение данных по ссылке, формат json
         :return: json файл
         """
+        url_api = 'https://api.hh.ru/vacancies'
         params = {
             "text": "Python",
             "per_page": 10,
             "area": 113
         }
-        response = requests.get(self.url_api, params=params)
-        if response.status_code == 200:
-            with open('vacancies.json', 'w') as f:
-                json.dump(response.json(), f, indent=2, ensure_ascii=False)
-        else:
-            return f'Error: {response.status_code}'
+        return params, url_api
+
+
+class SJ(APIKey):
+    pass
 
 
 class Vacancy:
+    '''
+    Класс для работы с вакансиями
+    '''
     def __init__(self):
         with open('vacancies.json', 'r', encoding='utf-8') as f:
             json_data = json.load(f)['items']
@@ -54,9 +80,17 @@ class Vacancy:
         return self.payment <= other.payment
 
 
+class JSONDump(HH):
+    '''
+    Класс для сохранения информации о вакансиях в json файл
+    '''
+    def dump_j(self, params, url_api):
+        response = requests.get(url_api, params=params)
+        if response.status_code == 200:
+            with open('vacancies.json', 'w') as f:
+                json.dump(response.json(), f, indent=2, ensure_ascii=False)
+        else:
+            return f'Error: {response.status_code}'
 
 
 
-
-class SJ(APIKey):
-    pass
