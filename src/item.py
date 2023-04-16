@@ -4,17 +4,6 @@ import json
 import os
 
 
-class USER:
-
-    def __init__(self, *args):
-        self.platform: str = input('Введите с какой платформы показать вакансии (HH / SJ): ')
-        self.keyword: str = input('По какому ключевому слову искать вакансии (в названии вакансии или описании): ')
-        self.top: str = input('Вывести ТОП (да / нет): ')
-        self.sort_vac: str = input('Отсортировать вакансии по уровню зп (да / нет): ')
-        if self.top == 'да':
-            self.num: int = int(input('Введите какой количество вакансий вывести в ТОП: '))
-
-
 class APIKey(ABC):
     @abstractmethod
     def api(self):
@@ -50,30 +39,35 @@ class VacancyData(ABC):
 
 class HH(APIKey):
 
-    def api(self):
+    def api(self, keyword):
         """
         Подключение по API
         :return: response
         """
         url_api = 'https://api.hh.ru/vacancies'
         params = {
-            "text": "Python",
+            "text": keyword,
             "per_page": 10,
             "area": 113
         }
-        response = requests.get(url_api, params=params)
-        return response
+        if requests.get(url_api, params=params).status_code == 200:
+            return requests.get(url_api, params=params).json()['items']
+        else:
+            return f'Error: {requests.get(url_api, params=params).status_code}'
 
+    def get_vacancies(self, keyword):
+        return self.api(keyword)
+     
 
 class SJ(APIKey):
-    def api(self):
+    def api(self, keyword):
         """
         Подключение по API
         :return: response
         """
         url_api = 'https://api.superjob.ru/2.0/vacancies/'
         params = {
-            'keyword': 'Python',
+            'keyword': keyword,
             'town': 'Москва',
             'count': 100,
             'period': 0
@@ -82,70 +76,117 @@ class SJ(APIKey):
             'X-Api-App-Id': 'v3.r.137494111.a6b43592ad3010404a6417932bb1b169d0bff73d.8da83ac6ac2fd9187fe1b5b8a7ecd1cc096ff71c',
             'Content-Type': 'application/json'
         }
-        response = requests.get(url_api, params=params, headers=headers)
-        return response
+        return requests.get(url_api, params=params, headers=headers).json()
+
+    def get_vacancies(self, keyword):
+        return self.api(keyword)
 
 
 class Vacancy:
     '''
     Класс для работы с вакансиями
     '''
-    def __init__(self):
-        with open('vacancies.json', 'r', encoding='utf-8') as f:
-            json_data = json.load(f)['items']
+    def __init__(self, id_vac, title, url, payment_min, payment_max, currency, responsibility):
+        self.id_vac = id_vac
+        self.title = title
+        self.url = url
+        self.payment_max = payment_max
+        self.payment_min = payment_min
+        self.currency = currency
+        self.responsibility = responsibility
 
-        self.title = json_data[0]['name']
-        self.url = json_data[0]['url']
-        self.payment = json_data[0]['salary']['from']
-        self.requirement = json_data[0]['snippet']['requirement']
-        self.responsibility = json_data[0]['snippet']['responsibility']
+    def __str__(self):
+        payment_min = f'от {self.payment_min}' if self.payment_min else ''
+        payment_max = f'до {self.payment_max}' if self.payment_max else ''
+        return f"{self.id_vac}\n{self.title}\n{self.url}\n{payment_min} {payment_max} {self.currency}\n{self.responsibility}"
 
-    def __le__(self, other):
+    def __gt__(self, other):
         '''
         Сравнение вакансий по уровню зарплаты
         :param other: вакансия2
         :return: True - зп вакансии 1 меньше зп вакансии 2, в противном случае False
         '''
-        return self.payment <= other.payment
+        if not other.payment_min:
+            return True
+        if not self.payment_min:
+            return False
+        return self.payment_min >= other.payment_min
 
 
-class JSONDump():
+
+
+        
+
+
+class JSONDump:
     '''
     Класс для сохранения информации о вакансиях в json файл
     '''
     def __init__(self, response: requests):
         self.response = response
 
-    def dump_js(self):
-        if self.response.status_code == 200:
-            with open('vacancies.json', 'w') as f:
-                json.dump(self.response.json(), f, indent=2, ensure_ascii=False)
-        else:
-            return f'Error: {self.response.status_code}'
+    def add_vacancy(self, data):
+        with open('vacancies.json', 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+    def selected_hh(self, top_n, payment_min=None):
+        with open('vacancies.json', 'r', encoding='utf-8') as f:
+            json_data = json.load(f)
+
+        vacancies = []
+        for vacancy in json_data:
+            pay_min = vacancy['salary']['from']
+            if vacancy['salary'] is None:
+                continue
+            elif payment_min is not None:
+                if int(pay_min) >= int(payment_min):
+                    vacancies.append(
+                        Vacancy(vacancy['id'], vacancy['name'], vacancy['alternate_url'], vacancy['salary']['from'],
+                                vacancy['salary']['to'], vacancy['salary']['currency'],
+                                vacancy['snippet']['responsibility']))
+            else:
+                vacancies.append(
+                    Vacancy(vacancy['id'], vacancy['name'], vacancy['alternate_url'], vacancy['salary']['from'],
+                            vacancy['salary']['to'], vacancy['salary']['currency'],
+                            vacancy['snippet']['responsibility']))
+        return vacancies[:top_n]
+
+    def selected_sj(self, top_n):
+        with open('vacancies.json', 'r', encoding='utf-8') as f:
+            json_data = json.load(f)['objects']
+
+        vacancies = []
+        for vacancy in json_data:
+            if vacancy['payment_from'] == 0 and vacancy['payment_to'] == 0:
+                continue
+            else:
+                vacancies.append(Vacancy(vacancy['id'], vacancy['profession'], vacancy['link'], vacancy['payment_from'],
+                                         vacancy['payment_to'], vacancy['currency'], vacancy['candidat']))
+        return vacancies[:top_n]
 
 
-    # def get_vacancy(self, user_titlfe):
-    #     '''
-    #     Получение данных из файла по указанным критериям
-    #     :return: данные по критериям
-    #     '''
-    #     with open('../vacancies.json', 'r', encoding='utf-8') as f:
-    #         json_data = json.load(f)['items']
-    #
-    #     user_data = []
-    #     for name in json_data[0]['name']:
-    #         if user_title == name:
-    #             user_data.append(json_data[0]['name'])
-    #             user_data.append(json_data[0]['url'])
-    #             user_data.append(json_data[0]['salary']['from'])
-    #             user_data.append(json_data[0]['snippet']['requirement'])
-    #             user_data.append(json_data[0]['snippet']['responsibility'])
-    #     return user_data
 
-#
-# vac = JSONDump()
-# vac1 = JSONDump.get_vacancy(vac, 'Python')
-# print(vac1)
+    def delete_vacancy(self, data, id):
+        del data[id]
+        
+    
+    def sorted_vac_min(self, data):
+        """
+        Сортировка json файла по минимальной зарплате
+        :return: сортированный файл
+        """
+        data = sorted(data, reverse=True)
+        return data
 
+    def get_vacancy(self, keyword):
+        '''
+        Получение данных из файла по указанным критериям
+        :return: данные по критериям
+        '''
+        with open('vacancies.json', 'r', encoding='utf-8') as f:
+            json_data = json.load(f)['items']
 
+        if keyword in json_data[0]['name']:
+            return f"\n{json_data[0]['id']}\n{json_data[0]['name']}\n{json_data[0]['url']}\n{json_data[0]['salary']['from']}" \
+                   f"\n{json_data[0]['snippet']['requirement']}\n{json_data[0]['snippet']['responsibility']} "
 
