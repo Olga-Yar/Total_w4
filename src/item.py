@@ -135,15 +135,18 @@ class JSONDump:
 
         vacancies = []
         for vacancy in json_data:
-            pay_min = vacancy['salary']['from']
             if vacancy['salary'] is None:
                 continue
             elif payment_min is not None:
-                if int(pay_min) >= int(payment_min):
-                    vacancies.append(
-                        Vacancy(vacancy['id'], vacancy['name'], vacancy['alternate_url'], vacancy['salary']['from'],
-                                vacancy['salary']['to'], vacancy['salary']['currency'],
-                                vacancy['snippet']['responsibility']))
+                if vacancy['salary']['from'] is not None:
+                    pay_min = vacancy['salary']['from']
+                    if int(pay_min) >= int(payment_min):
+                        vacancies.append(
+                            Vacancy(vacancy['id'], vacancy['name'], vacancy['alternate_url'], vacancy['salary']['from'],
+                                    vacancy['salary']['to'], vacancy['salary']['currency'],
+                                    vacancy['snippet']['responsibility']))
+                    else:
+                        continue
             else:
                 vacancies.append(
                     Vacancy(vacancy['id'], vacancy['name'], vacancy['alternate_url'], vacancy['salary']['from'],
