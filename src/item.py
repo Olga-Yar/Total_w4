@@ -165,7 +165,7 @@ class JSONDump:
                             vacancy['snippet']['responsibility']))
         return vacancies[:top_n]
 
-    def selected_sj(self, top_n, payment_min):
+    def selected_sj(self, top_n, payment_min=None):
         """
         Выборка по вакансиям по условиям от пользователя через платформу SJ
         :param top_n: сколько вакансий вывести
@@ -200,8 +200,8 @@ class JSONDump:
         :param user_id: индекс, введенный пользователем
         :return: список вакансий без удаленного элемента
         """
-        if (user_id-1) == vacancies[user_id]:
-            vacancies.pop(user_id)
+        if user_id is not None:
+            del vacancies[user_id-1]
             return vacancies
 
     def sorted_vac_min(self, data):
