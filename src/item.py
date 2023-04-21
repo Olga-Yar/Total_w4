@@ -167,12 +167,11 @@ class JSONDump:
                                          vacancy['payment_to'], vacancy['currency'], vacancy['candidat']))
         return vacancies[:top_n]
 
+    def delete_vacancy(self, vacancies, user_id=None):
+        if (user_id-1) == vacancies[user_id]:
+            vacancies.pop(user_id)
+            return vacancies
 
-
-    def delete_vacancy(self, data, id):
-        del data[id]
-        
-    
     def sorted_vac_min(self, data):
         """
         Сортировка json файла по минимальной зарплате
