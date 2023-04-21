@@ -79,6 +79,10 @@ class SJ(APIKey):
         return requests.get(url_api, params=params, headers=headers).json()
 
     def get_vacancies(self, keyword):
+        """
+        Возвращает вакансии по ключевому слову
+        :param keyword: ключевое слово пользователя
+        """
         return self.api(keyword)
 
 
@@ -96,6 +100,9 @@ class Vacancy:
         self.responsibility = responsibility
 
     def __str__(self):
+        """
+        Вывод информации для пользователя
+        """
         payment_min = f'от {self.payment_min}' if self.payment_min else ''
         payment_max = f'до {self.payment_max}' if self.payment_max else ''
         return f"{self.id_vac}\n{self.title}\n{self.url}\n{payment_min} {payment_max} {self.currency}\n{self.responsibility}"
@@ -113,23 +120,27 @@ class Vacancy:
         return self.payment_min >= other.payment_min
 
 
-
-
-        
-
-
 class JSONDump:
-    '''
+    """
     Класс для сохранения информации о вакансиях в json файл
-    '''
+    """
     def __init__(self, response: requests):
         self.response = response
 
     def add_vacancy(self, data):
+        """
+        Запись данных в json файл
+        """
         with open('vacancies.json', 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
     def selected_hh(self, top_n, payment_min=None):
+        """
+        Выборка по вакансиям по условиям от пользователя через платформу HH
+        :param top_n: сколько вакансий вывести
+        :param payment_min: минимальный уровень зп
+        :return: список вакансий по условиям выборки
+        """
         with open('vacancies.json', 'r', encoding='utf-8') as f:
             json_data = json.load(f)
 
@@ -154,7 +165,13 @@ class JSONDump:
                             vacancy['snippet']['responsibility']))
         return vacancies[:top_n]
 
-    def selected_sj(self, top_n):
+    def selected_sj(self, top_n, payment_min):
+        """
+        Выборка по вакансиям по условиям от пользователя через платформу SJ
+        :param top_n: сколько вакансий вывести
+        :param payment_min: минимальный уровень зп
+        :return: список вакансий по условиям выборки
+        """
         with open('vacancies.json', 'r', encoding='utf-8') as f:
             json_data = json.load(f)['objects']
 
@@ -162,12 +179,27 @@ class JSONDump:
         for vacancy in json_data:
             if vacancy['payment_from'] == 0 and vacancy['payment_to'] == 0:
                 continue
+            elif payment_min is not None:
+                if vacancy['payment_from'] is not None:
+                    pay_min = vacancy['payment_from']
+                    if int(pay_min) >= int(payment_min):
+                        vacancies.append(
+                            Vacancy(vacancy['id'], vacancy['profession'], vacancy['link'], vacancy['payment_from'],
+                                    vacancy['payment_to'], vacancy['currency'], vacancy['candidat']))
+                    else:
+                        continue
             else:
                 vacancies.append(Vacancy(vacancy['id'], vacancy['profession'], vacancy['link'], vacancy['payment_from'],
                                          vacancy['payment_to'], vacancy['currency'], vacancy['candidat']))
         return vacancies[:top_n]
 
     def delete_vacancy(self, vacancies, user_id=None):
+        """
+        Удаление экземпляра из списка по индексу, введенному пользователем
+        :param vacancies: список экземпляров класса
+        :param user_id: индекс, введенный пользователем
+        :return: список вакансий без удаленного элемента
+        """
         if (user_id-1) == vacancies[user_id]:
             vacancies.pop(user_id)
             return vacancies
