@@ -134,36 +134,50 @@ class JSONDump:
         with open('vacancies.json', 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
-    def selected_hh(self, top_n, payment_min=None):
+    def get_vacancies(self):
+        with open('vacancies.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return data
+
+    def selected_top_hh(self, data, top_n):
         """
-        Выборка по вакансиям по условиям от пользователя через платформу HH
+        Выборка по вакансиям топ№ через платформу HH
         :param top_n: сколько вакансий вывести
-        :param payment_min: минимальный уровень зп
         :return: список вакансий по условиям выборки
         """
-        with open('vacancies.json', 'r', encoding='utf-8') as f:
-            json_data = json.load(f)
-
         vacancies = []
-        for vacancy in json_data:
+        for vacancy in data:
             if vacancy['salary'] is None:
                 continue
-            elif payment_min is not None:
-                if vacancy['salary']['from'] is not None:
-                    pay_min = vacancy['salary']['from']
-                    if int(pay_min) >= int(payment_min):
-                        vacancies.append(
-                            Vacancy(vacancy['id'], vacancy['name'], vacancy['alternate_url'], vacancy['salary']['from'],
-                                    vacancy['salary']['to'], vacancy['salary']['currency'],
-                                    vacancy['snippet']['responsibility']))
-                    else:
-                        continue
             else:
                 vacancies.append(
                     Vacancy(vacancy['id'], vacancy['name'], vacancy['alternate_url'], vacancy['salary']['from'],
                             vacancy['salary']['to'], vacancy['salary']['currency'],
                             vacancy['snippet']['responsibility']))
         return vacancies[:top_n]
+
+    def selected_payment_min_hh(self, data, payment_min=None):
+        """
+        Выборка по вакансиям с зп не менее заданного уровня через платформу HH
+        :param payment_min: минимальный уровень зп
+        :return: список вакансий по условиям выборки
+        """
+        vacancies = []
+        for vacancy in data:
+            if vacancy['salary'] is not None:
+                if payment_min is not None:
+                    if vacancy['salary']['from'] is not None:
+                        pay_min = vacancy['salary']['from']
+                        if int(pay_min) >= int(payment_min):
+                            vacancies.append(
+                                Vacancy(vacancy['id'], vacancy['name'], vacancy['alternate_url'], vacancy['salary']['from'],
+                                        vacancy['salary']['to'], vacancy['salary']['currency'],
+                                        vacancy['snippet']['responsibility']))
+                        else:
+                            continue
+            else:
+                continue
+        return vacancies
 
     def selected_sj(self, top_n, payment_min=None):
         """
@@ -177,7 +191,8 @@ class JSONDump:
 
         vacancies = []
         for vacancy in json_data:
-            if vacancy['payment_from'] == 0 and vacancy['payment_to'] == 0:
+            if vacancy['payment_from'] == 0 and vacancy['payment_to'] == 0 or \
+                    vacancy['payment_from'] is None and vacancy['payment_to'] is None:
                 continue
             elif payment_min is not None:
                 if vacancy['payment_from'] is not None:
@@ -188,6 +203,8 @@ class JSONDump:
                                     vacancy['payment_to'], vacancy['currency'], vacancy['candidat']))
                     else:
                         continue
+                else:
+                    continue
             else:
                 vacancies.append(Vacancy(vacancy['id'], vacancy['profession'], vacancy['link'], vacancy['payment_from'],
                                          vacancy['payment_to'], vacancy['currency'], vacancy['candidat']))
