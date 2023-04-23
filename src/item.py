@@ -15,25 +15,24 @@ class APIKey(ABC):
 
 class VacancyData(ABC):
     @abstractmethod
-    def dump_j(self, params, url_api):
-        '''
+    def add_vacancy(self, params, url_api):
+        """
         Добавление вакансий в файл
-        '''
+        """
         pass
 
     @abstractmethod
-    def get_vacancy(self):
-        '''
-        Получение данных из файла по указанным критериям
-        :return: data
-        '''
+    def selected_top(self):
+        """
+        Вывод ТОП вакансий
+        """
         pass
 
     @abstractmethod
-    def del_vacancy(self):
-        '''
-        Удаление информации о вакансиях
-        '''
+    def delete_vacancy(self):
+        """
+        Удаление вакансии по порядковому номеру из списка
+        """
         pass
 
 
@@ -109,7 +108,7 @@ class Vacancy:
                f"\n{self.responsibility}"
 
 
-class JSONDump:
+class JSONDump(VacancyData):
     """
     Класс для сохранения информации о вакансиях в json файл
     """
@@ -184,7 +183,6 @@ class JSONDump:
                     continue
         return vacancies_payment
 
-
     def delete_vacancy(self, vacancies, user_id=None):
         """
         Удаление экземпляра из списка по индексу, введенному пользователем
@@ -193,7 +191,7 @@ class JSONDump:
         :return: список вакансий без удаленного элемента
         """
         if user_id is not None:
-            del vacancies[user_id-1]
+            del vacancies[int(user_id)-1]
             return vacancies
 
     def sorted_vac_min(self, data):
@@ -206,15 +204,15 @@ class JSONDump:
                 i.payment_min = 0
         return sorted(data, key=lambda x: x.payment_min, reverse=True)
 
-    def get_vacancy(self, keyword):
-        '''
-        Получение данных из файла по указанным критериям
-        :return: данные по критериям
-        '''
-        with open('vacancies.json', 'r', encoding='utf-8') as f:
-            json_data = json.load(f)['items']
-
-        if keyword in json_data[0]['name']:
-            return f"\n{json_data[0]['id']}\n{json_data[0]['name']}\n{json_data[0]['url']}\n{json_data[0]['salary']['from']}" \
-                   f"\n{json_data[0]['snippet']['requirement']}\n{json_data[0]['snippet']['responsibility']} "
+    # def get_vacancy(self, keyword):
+    #     """
+    #     Получение данных из файла по указанным критериям
+    #     :return: данные по критериям
+    #     """
+    #     with open('vacancies.json', 'r', encoding='utf-8') as f:
+    #         json_data = json.load(f)['items']
+    #
+    #     if keyword in json_data[0]['name']:
+    #         return f"\n{json_data[0]['id']}\n{json_data[0]['name']}\n{json_data[0]['url']}\n{json_data[0]['salary']['from']}" \
+    #                f"\n{json_data[0]['snippet']['requirement']}\n{json_data[0]['snippet']['responsibility']} "
 

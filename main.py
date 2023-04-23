@@ -24,12 +24,14 @@ def main():
 
         for row in data:
             print(row, end='\n\n')
-        user_id = int(input('Удалить вакансию из списка по порядковому номеру: '))
 
-        if user_id is not None:
+        user_id = input('Удалить вакансию из списка по порядковому номеру: ')
+        if user_id != '':
             data = json_saver.delete_vacancy(data, user_id)
             for row in data:
                 print(row, end='\n\n')
+        else:
+            quit()
 
     elif user.platform == 'SJ':
         superjob_api = SJ()
@@ -44,12 +46,14 @@ def main():
 
         for row in data:
             print(row, end='\n\n')
-        user_id = int(input('Удалить вакансию из списка по порядковому номеру: '))
 
-        if user_id is not None:
+        user_id = input('Удалить вакансию из списка по порядковому номеру: ')
+        if user_id != '':
             data = json_saver.delete_vacancy(data, user_id)
             for row in data:
                 print(row, end='\n\n')
+        else:
+            quit()
 
     else:
         print('Нет данных под ваш запрос.')
