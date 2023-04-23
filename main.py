@@ -1,4 +1,4 @@
-from src.item import HH, SJ, Vacancy, JSONDump
+from src.item import HH, SJ, JSONDump
 from src.user_class import USER
 
 

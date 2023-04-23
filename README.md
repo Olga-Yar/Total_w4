@@ -29,66 +29,39 @@
 - Информация о вакансиях, полученная с разных платформ, сохраненная в JSON-файл.
 - Отфильтрованные и отсортированные вакансии, выводимые пользователю через консоль.
 
-## Пример использования
+## Работа программы
+- #### Выбор пользователем поисковой платформы, *по умолчанию стоит HH*
+`` if user.platform == 'HH'/ 'SJ'``
 
-Данный пример можно использовать как подсказку к началу реализации. Итоговая реализация может иметь любое количество классов, функций и их названий, другой принцип организации.
+- #### подключение по API к поисковой платформе
+``hh_api = HH() / SJ()``
 
-# Создание экземпляра класса для работы с API сайтов с вакансиями
-```hh_api = HeadHunterAPI()```
+- #### получение вакансий по ключу от пользователя, *по умолчанию стоит Python*
+``hh_vacancies / superjob_vacancies = 
+hh_api / superjob_api.get_vacancies(user.keyword)``
 
-```superjob_api = SuperJobAPI()```
+- #### запись вакансий в json файл
+``json_saver.add_vacancy(hh_vacancies / superjob_vacancies)``
 
-# Получение вакансий с разных платформ
-```hh_vacancies = hh_api.get_vacancies("Python")```
+- #### создание списка экземпляров класса
+``data = json_saver.get_vacancies_list_hh() / get_vacancies_list_sj()``
 
-```superjob_vacancies = superjob_api.get_vacancies("Python")```
+- #### сортировка списка экземпляров класса
+``data = json_saver.sorted_vac_min(data)``
 
-# Создание экземпляра класса для работы с вакансиями
-```vacancy = Vacancy("Python Developer", "<https://hh.ru/vacancy/123456>", "100 000-150 000 руб.", "Требования: опыт работы от 3 лет...")```
+- #### проверка ввода пользователем минимальной зарплаты
+``if payment_min != '':
+    data = json_saver.selected_payment_min(data, payment_min)``
 
-# Сохранение информации о вакансиях в файл
-```json_saver = JSONSaver()```
+- #### проверка ввода пользователем ТОП вывода вакансий
+``if top_n != '':
+    data = json_saver.selected_top(data, user.top_n)``
 
-```json_saver.add_vacancy(vacancy)```
+- #### проверка ввода пользователем порядкового номера вакансии на удаление
+``user_id = input('Удалить вакансию из списка по порядковому номеру: ')
+if user_id != '':
+    data = json_saver.delete_vacancy(data, user_id)``
 
-```json_saver.get_vacancies_by_salary("100 000-150 000 руб.")```
-
-```json_saver.delete_vacancy(vacancy)```
-
-# Функция для взаимодействия с пользователем
-```def user_interaction():```
-
-```    platforms = ["HeadHunter", "SuperJob"]```
-
-```   search_query = input("Введите поисковый запрос: ")```
-
-```   top_n = int(input("Введите количество вакансий для вывода в топ N: "))```
-
-```   filter_words = input("Введите ключевые слова для фильтрации вакансий: ").split()```
-   
-```   filtered_vacancies = filter_vacancies(hh_vacancies, superjob_vacancies, filter_words)```
-
-    if not filtered_vacancies:
-        print("Нет вакансий, соответствующих заданным критериям.")
-        return
-
-    sorted_vacancies = sort_vacancies(filtered_vacancies)
-    top_vacancies = get_top_vacancies(sorted_vacancies, top_n)
-    print_vacancies(top_vacancies)
-
-
-if __name__ == "__main__":
-    user_interaction()
-
-## Критерии оценивания
-
-- [ ]  Проект выложили на GitHub.
-- [ ]  Из файла README понятно, о чём проект и как его использовать.
-- [ ]  В Git есть точечные коммиты.
-- [ ]  Код программы грамотно разбит на функции/классы/модули/пакеты.
-- [ ]  Код читабельный (хороший нейминг, есть docstring, используется typing).
-- [ ]  В работе используются абстрактные классы (минимум один).
-- [ ]  В работе есть переопределение магических методов.
-- [ ]  Для работы с API используется библиотека **requests**.
-- [ ]  В ходе работы программы создается файл со списком вакансий.
-- [ ]  Пользователь может вывести из файла набор вакансий по определенным критериям.
+- #### если ввод пользователя не предусмотрен программой
+``else:
+    print('Нет данных под ваш запрос.')``

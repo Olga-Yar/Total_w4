@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 import requests
 import json
-import os
 
 
 class APIKey(ABC):
