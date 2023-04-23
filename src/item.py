@@ -87,9 +87,9 @@ class SJ(APIKey):
 
 
 class Vacancy:
-    '''
+    """
     Класс для работы с вакансиями
-    '''
+    """
     def __init__(self, id_vac, title, url, payment_min, payment_max, currency, responsibility):
         self.id_vac = id_vac
         self.title = title
@@ -105,19 +105,8 @@ class Vacancy:
         """
         payment_min = f'от {self.payment_min}' if self.payment_min else ''
         payment_max = f'до {self.payment_max}' if self.payment_max else ''
-        return f"{self.id_vac}\n{self.title}\n{self.url}\n{payment_min} {payment_max} {self.currency}\n{self.responsibility}"
-
-    def __gt__(self, other):
-        '''
-        Сравнение вакансий по уровню зарплаты
-        :param other: вакансия2
-        :return: True - зп вакансии 1 меньше зп вакансии 2, в противном случае False
-        '''
-        if not other.payment_min:
-            return True
-        if not self.payment_min:
-            return False
-        return self.payment_min >= other.payment_min
+        return f"{self.id_vac}\n{self.title}\n{self.url}\n{payment_min} {payment_max} {self.currency}" \
+               f"\n{self.responsibility}"
 
 
 class JSONDump:
@@ -134,17 +123,13 @@ class JSONDump:
         with open('vacancies.json', 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
-    def get_vacancies(self):
+    def get_vacancies_list_hh(self):
+        """
+        Создание списка экземпляров класса для платформы HH
+        :return: список экземпляров класса
+        """
         with open('vacancies.json', 'r', encoding='utf-8') as f:
             data = json.load(f)
-        return data
-
-    def selected_top_hh(self, data, top_n):
-        """
-        Выборка по вакансиям топ№ через платформу HH
-        :param top_n: сколько вакансий вывести
-        :return: список вакансий по условиям выборки
-        """
         vacancies = []
         for vacancy in data:
             if vacancy['salary'] is None:
@@ -154,61 +139,51 @@ class JSONDump:
                     Vacancy(vacancy['id'], vacancy['name'], vacancy['alternate_url'], vacancy['salary']['from'],
                             vacancy['salary']['to'], vacancy['salary']['currency'],
                             vacancy['snippet']['responsibility']))
-        return vacancies[:top_n]
+        return vacancies
 
-    def selected_payment_min_hh(self, data, payment_min=None):
+    def get_vacancies_list_sj(self):
+        """
+        Создание списка экземпляров класса для платформы SJ
+        :return: список экземпляров класса
+        """
+        with open('vacancies.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)['objects']
+
+        vacancies = []
+        for vacancy in data:
+            if vacancy['payment_from'] is None:
+                continue
+            else:
+                vacancies.append(Vacancy(vacancy['id'], vacancy['profession'], vacancy['link'], vacancy['payment_from'],
+                                         vacancy['payment_to'], vacancy['currency'], vacancy['candidat']))
+        return vacancies
+
+    def selected_top(self, data, top_n):
+        """
+        Выборка по вакансиям топ№ через платформу HH
+        :param top_n: сколько вакансий вывести
+        :return: список вакансий по условиям выборки
+        """
+        return data[:int(top_n)]
+
+    def selected_payment_min(self, data, payment_min=None):
         """
         Выборка по вакансиям с зп не менее заданного уровня через платформу HH
         :param payment_min: минимальный уровень зп
         :return: список вакансий по условиям выборки
         """
-        vacancies = []
-        for vacancy in data:
-            if vacancy['salary'] is not None:
-                if payment_min is not None:
-                    if vacancy['salary']['from'] is not None:
-                        pay_min = vacancy['salary']['from']
-                        if int(pay_min) >= int(payment_min):
-                            vacancies.append(
-                                Vacancy(vacancy['id'], vacancy['name'], vacancy['alternate_url'], vacancy['salary']['from'],
-                                        vacancy['salary']['to'], vacancy['salary']['currency'],
-                                        vacancy['snippet']['responsibility']))
-                        else:
-                            continue
-            else:
-                continue
-        return vacancies
-
-    def selected_sj(self, top_n, payment_min=None):
-        """
-        Выборка по вакансиям по условиям от пользователя через платформу SJ
-        :param top_n: сколько вакансий вывести
-        :param payment_min: минимальный уровень зп
-        :return: список вакансий по условиям выборки
-        """
-        with open('vacancies.json', 'r', encoding='utf-8') as f:
-            json_data = json.load(f)['objects']
-
-        vacancies = []
-        for vacancy in json_data:
-            if vacancy['payment_from'] == 0 and vacancy['payment_to'] == 0 or \
-                    vacancy['payment_from'] is None and vacancy['payment_to'] is None:
-                continue
-            elif payment_min is not None:
-                if vacancy['payment_from'] is not None:
-                    pay_min = vacancy['payment_from']
-                    if int(pay_min) >= int(payment_min):
-                        vacancies.append(
-                            Vacancy(vacancy['id'], vacancy['profession'], vacancy['link'], vacancy['payment_from'],
-                                    vacancy['payment_to'], vacancy['currency'], vacancy['candidat']))
+        vacancies_payment = []
+        if payment_min is not None:
+            for i in data:
+                if i.payment_min is not None:
+                    if int(payment_min) <= int(i.payment_min):
+                        vacancies_payment.append(i)
                     else:
                         continue
                 else:
                     continue
-            else:
-                vacancies.append(Vacancy(vacancy['id'], vacancy['profession'], vacancy['link'], vacancy['payment_from'],
-                                         vacancy['payment_to'], vacancy['currency'], vacancy['candidat']))
-        return vacancies[:top_n]
+        return vacancies_payment
+
 
     def delete_vacancy(self, vacancies, user_id=None):
         """
@@ -226,8 +201,10 @@ class JSONDump:
         Сортировка json файла по минимальной зарплате
         :return: сортированный файл
         """
-        data = sorted(data, reverse=True)
-        return data
+        for i in data:
+            if i.payment_min is None:
+                i.payment_min = 0
+        return sorted(data, key=lambda x: x.payment_min, reverse=True)
 
     def get_vacancy(self, keyword):
         '''
